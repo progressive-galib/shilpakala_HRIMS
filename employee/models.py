@@ -1,116 +1,76 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-# Create your models here.
-
 class Employee(models.Model):
-  id = models.IntegerField(max_length=6, unique=True)  #YYXXXX; first two digit for joining year and four digit for index
-  username = models.TextField(max_length=20, unique=True)
-  password = models.TextField()
-  firstname = models.CharField(max_length=255)
-  lastname = models.CharField(max_length=255)
-  nid = models.IntegerField(max_length=17)
-  dateofbirth = models.DateField()
-  joiningdate = models.DateField()
-  bloodgroup = models.TextField()
+    class EmployeeCategory(models.TextChoices):
+        OFFICER = "Officer", _("Officer")
+        ARTIST = "Artist", _("Artist")
+        CADRE = "Cadre", _("Cadre")
+        CONTRACTUAL = "Contractual", _("Contractual")
+        MASTERROLE = "Masterrole", _("Masterrole")
+        OUTSOURCING = "Outsourcing", _("Outsourcing")
 
-  mobileno = models.IntegerField(max_length=11)
-  email = models.EmailField()
-  address = models.TextField()
-  photo = models.FileField(upload_to="files/photo/")
-  
-  designation = models.TextField()
-  #grade = models.IntegerChoices()
-  currentsalary =  models.IntegerField()
+    #id = models.IntegerField(unique=True)  # YYXXXX; first two digit for joining year and four digit for index
+    username = models.CharField(max_length=20, unique=True)
+    password = models.TextField()
+    firstname = models.CharField(max_length=255)
+    lastname = models.CharField(max_length=255)
+    nid = models.BigIntegerField(unique=True)
+    dateofbirth = models.DateField()
+    joiningdate = models.DateField()
+    bloodgroup = models.CharField(max_length=5)
+    mobileno = models.CharField(max_length=11)
+    email = models.EmailField()
+    address = models.TextField()
+    photo = models.ImageField(upload_to="files/photo/")
+    designation = models.TextField()
+    currentsalary = models.DecimalField(max_digits=10, decimal_places=2)
+    remaining_cl = models.FloatField()    # Remaining casual leave
+    remaining_el = models.FloatField()    # Remaining Earned leave
+    remaining_hel = models.FloatField()   # Remaining Half Earned leave
+    status = models.BooleanField(default=True)
+    employee_category = models.CharField(max_length=20,choices=EmployeeCategory.choices)
+    assigened_office = models.ForeignKey("Office",on_delete = models.CASCADE)
 
-  remaining_cl = models.FloatField()    #remaining casual leave
-  remaining_el = models.FloatField()    #remaining Earned leave
-  remaining_hel = models.FloatField()   #remaining Half Earned leave
-  
-  #office = models.ForeignKey(Office, on_delete=models.CASCADE)
-  status = models.BooleanField()
+class Division(models.Model):
+    name = models.CharField(max_length=255)
+
+class District(models.Model):
+    name = models.CharField(max_length=255)
+    division = models.ForeignKey(Division, on_delete=models.CASCADE)
 
 class Upazilla(models.Model):
-  upazilla_name = models.TextField()
-  upazilla_division = models.TextField()
-  upazilla_district = models.TextField()
+    name = models.CharField(max_length=255)
+    district = models.ForeignKey(District, on_delete=models.CASCADE)
 
 class Office(models.Model):
-  officehead = models.ForeignKey(Employee, on_delete=models.CASCADE)
-  officename = models.TextField()
-  division = models.TextChoices()
-  """ 
-    DHAKA = "Dhaka", _("dhaka")
-    CHOTTOGRAM = "Chottogram", _("chottogram")
-    Khunla
-    Rajshahi
-    Barishal
-    Rangpur
-    Sylhet
-    Mymensign
-  """
-  district = models.TextChoices()
-  """
-    DHAKA = "Dhaka", _("dhaka")
-    CHOTTOGRAM = "Chottogram", _("chottogram") 
-    """
-  upazilla = models.ForeignKey(Upazilla, on_delete = models.CASCADE)
-  officeaddress = models.TextField(512)
-  notes = models.TextField(512)
-   
-
-  """ class EmployeeDepartment(models.TextChoices):
-    "DG Office"
-    "Secretary office"
-    "Department of Fine Arts"
-    "Department of Theatre and Film"
-    "Department of Research and Publicaitons"
-    "Department of Music Dance and Recitation"
-    "Department of Training"
-    "Department of Production"
-    "Administration"
-    "Finance and Accounts"
-    "Maintainence and Enginernig"
-    "Establishment"
-    "Common Service"
-    "Auditorium Management"
-    "Public Relations"
-    "Ethnic Minority" """
-
-  class EmployeeCategory(models.TextChoices):
-    OFFICER = "Officer", _("Officer")
-    ARTIST = "Artist", _("Artist")
-    CADRE = "Cadre", _("Cadre")
-    CONTRACTUAL = "Contractual", _("Contractual")
-    MASTERROLE = "Masterrole", _("Masterrole")
-    OUTSOURCING = "Outsourcing", _("Outsourcing")
-  
+    officehead = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    officename = models.CharField(max_length=255)
+    division = models.CharField(max_length=255) # You can use CharField for division and district if they are not predefined choices
+    district = models.CharField(max_length=255)
+    upazilla = models.ForeignKey(Upazilla, on_delete=models.CASCADE)
+    officeaddress = models.TextField(max_length=512)
+    notes = models.TextField(max_length=512)
 
 class Leave(models.Model):
-  class levavetype(models.TextChoices):
-    CASUAL_LEAVE = "CL", _("Casul Leave")
-    EARNED_LEAVE = "EL", _("Earned Leave")
-    HALF_EARND_LEAVE = "HEL", _("Half Earned Leave")
-    EDUCATION_LEAVE = "EDUL", _("Education Leave")
-    #EXBANGLADESH_LEAVE = "EXBDL", _("Ex-Bangladesh Leave")
-  employee = models.ForeignKey(Employee, on_delete = models.CASCADE)
-  startDate = models.DateField()
-  endDate = models.DateField()
-  file = models.FileField(upload_to="files/leave/%Y/")
-  #isapproved = models.BooleanField()
-  isexbangladesh = models.BooleanField()
-  #approvedby = models.ForeignKey(Employee, on_delete = models.CASCADE)
+    class LeaveType(models.TextChoices):
+        CASUAL_LEAVE = "CL", _("Casual Leave")
+        EARNED_LEAVE = "EL", _("Earned Leave")
+        HALF_EARNED_LEAVE = "HEL", _("Half Earned Leave")
+        EDUCATION_LEAVE = "EDUL", _("Education Leave")
+        EX_BANGLADESH_LEAVE = "EXBDL", _("Ex-Bangladesh Leave")
 
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    file = models.FileField(upload_to="files/leave/%Y/")
+    is_exbangladesh = models.BooleanField()
+    leave_type = models.CharField(max_length=20, choices=LeaveType.choices)
 
 class ACR(models.Model):
-  employee = models.ForeignKey(Employee, on_delete = models.CASCADE)
-  startDate = models.DateField()
-  endDate = models.DateField()
-  rating = models.FloatField()
-  comments = models.TextField(511)
-  file = models.FileField(upload_to="files/acr/%Y/")
-
-  
-
-
-
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    rating = models.FloatField()
+    comments = models.TextField(max_length=511)
+    file = models.FileField(upload_to="files/acr/%Y/")
